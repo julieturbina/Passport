@@ -1,8 +1,9 @@
+// routes/auth-routes.js
 const express = require("express");
 const authRoutes = express.Router();
-
 const passport = require("passport");
 const ensureLogin = require("connect-ensure-login");
+
 
 // User model
 const User = require("../models/user");
@@ -11,16 +12,33 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const bcryptSalt = 10;
 
+//facebook
+authRoutes.get("/auth/facebook", passport.authenticate("facebook"));
+authRoutes.get("/auth/facebook/callback", passport.authenticate("facebook", {
+  successRedirect: "/private-page",
+  failureRedirect: "/"
+}));
+
+authRoutes.get("/logout", (req, res) => {
+    req.logout();
+    res.redirect("/login");
+  });
+
+authRoutes.get("/private-page", ensureLogin.ensureLoggedIn(), (req, res) => {
+    res.render("private", { user: req.user });
+  });
+
+
 authRoutes.get("/login", (req, res, next) => {
     res.render("auth/login", { "message": req.flash("error") });
-  });
+});
   
-  authRoutes.post("/login", passport.authenticate("local", {
+authRoutes.post("/login", passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "/login",
     failureFlash: true,
     passReqToCallback: true
-  }));
+}));
 
 authRoutes.get("/signup", (req, res, next) => {
   res.render("auth/signup");
@@ -62,9 +80,5 @@ authRoutes.post("/signup", (req, res, next) => {
     next(error);
   });
 });
-
-authRoutes.get("/private-page", ensureLogin.ensureLoggedIn(), (req, res) => {
-    res.render("private", { user: req.user });
-  });
 
 module.exports = authRoutes;
